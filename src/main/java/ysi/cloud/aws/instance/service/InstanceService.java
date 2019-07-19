@@ -46,7 +46,8 @@ public class InstanceService {
 		DescribeInstancesResult describeInstancesResult = ec2.describeInstances(describeInstancesRequest);
 		List<Reservation> reservations = describeInstancesResult.getReservations();
 
-		return reservations.stream().map(x -> x.getInstances()).flatMap(Collection::stream).collect(Collectors.toList());
+		return reservations.stream()
+						   .map(x -> x.getInstances()).flatMap(Collection::stream).collect(Collectors.toList());
 	}
 
 	/**
@@ -57,8 +58,26 @@ public class InstanceService {
 	 */
 	public Optional<String> selectRootDeviceName(List<InstanceBlockDeviceMapping> blockDeviceMappings, String rootDeviceName) {
 		return blockDeviceMappings.stream()
-				.filter(x -> x.getDeviceName().equals(rootDeviceName))
-				.map(InstanceBlockDeviceMapping::getDeviceName)
-				.findFirst();
+								  .filter(x -> x.getDeviceName().equals(rootDeviceName))
+								  .map(InstanceBlockDeviceMapping::getDeviceName)
+								  .findFirst();
+	}
+
+	/**
+	 * rootDeviceName 찾기
+	 *
+	 * @param instanceId
+	 */
+	public void instanceExportTask(String instanceId) {
+//		ExportToS3TaskSpecification exportToS3TaskSpecification = new ExportToS3TaskSpecification();
+//		exportToS3TaskSpecification.setDiskImageFormat("VMDK");
+//		exportToS3TaskSpecification.setContainerFormat("ova");
+//		exportToS3TaskSpecification.setS3Bucket();
+//		CreateInstanceExportTaskRequest createInstanceExportTaskRequest = new CreateInstanceExportTaskRequest();
+//		createInstanceExportTaskRequest.setInstanceId();
+//		createInstanceExportTaskRequest.setTargetEnvironment();
+//		createInstanceExportTaskRequest.setExportToS3Task();
+//
+//		ec2.createInstanceExportTask()
 	}
 }

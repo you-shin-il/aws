@@ -1,5 +1,7 @@
 package ysi.cloud.aws.volume.service;
 
+import com.amazonaws.services.cloudwatchevents.AmazonCloudWatchEvents;
+import com.amazonaws.services.cloudwatchevents.AmazonCloudWatchEventsClient;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
 import com.amazonaws.services.ec2.model.*;
@@ -23,7 +25,9 @@ public class VolumeService {
 	private InstanceService instanceService;
 
 	public Volume createVolume(CreateVolumeRequest createVolumeRequest) {
+
 		CreateVolumeResult createVolumeResult = ec2.createVolume(createVolumeRequest);
+
 //		Instance instance = instanceService.selectInstance(instanceId);
 //		String imageId = instance.getImageId();
 //		DescribeImagesRequest describeImageRequest = new DescribeImagesRequest();
@@ -65,11 +69,11 @@ public class VolumeService {
 	}*/
 
 	/**
-	 * CreateVolumeRequest생성
+	 * CreateVolumeRequest 생성
 	 *
 	 * @param volume
 	 */
-	public CreateVolumeRequest createTransferVolume(Volume volume) {
+	public Volume createTransferVolume(Volume volume) {
 		CreateVolumeRequest createVolumeRequest = new CreateVolumeRequest();
 		createVolumeRequest.setVolumeType(volume.getVolumeType());
 		createVolumeRequest.setAvailabilityZone(volume.getAvailabilityZone());
@@ -79,6 +83,15 @@ public class VolumeService {
 		createVolumeRequest.setSize(volume.getSize());
 		createVolumeRequest.setVolumeType(volume.getVolumeType());
 
-		return createVolumeRequest;
+		return createVolume(createVolumeRequest);
+	}
+
+	/**
+	 * 인스턴스에 볼륨 연결
+	 *
+	 * @param attachVolumeRequest
+	 */
+	public AttachVolumeResult volumeAttach(AttachVolumeRequest attachVolumeRequest) {
+		return ec2.attachVolume(attachVolumeRequest);
 	}
 }

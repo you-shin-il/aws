@@ -21,8 +21,7 @@ import java.util.Optional;
  * Time: 오후 8:04
  */
 @Service
-public class TransferService {
-	final AmazonEC2 ec2 = AmazonEC2ClientBuilder.defaultClient();
+public class VmTransferService {
 
 	@Autowired
 	private InstanceService instanceService;
@@ -34,22 +33,7 @@ public class TransferService {
 	private VolumeService volumeService;
 
 	@Autowired
-	private TransferService transferService;
-
-	/**
-	 * 볼륨 생성
-	 *
-	 * @param createVolumeRequest
-	 */
-	public Volume createVolume(CreateVolumeRequest createVolumeRequest) {
-//		CreateVolumeRequest createVolumeRequest = new CreateVolumeRequest();
-//		createVolumeRequest.setSize(10);
-//		createVolumeRequest.setAvailabilityZone();
-//		createVolumeRequest.setVolumeType();
-//		createVolumeRequest.setSize(10);
-//		ec2.createVolume();
-		return null;
-	}
+	private VmTransferService transferService;
 
 	/**
 	 * aws 에서 오픈스택으로
@@ -60,26 +44,30 @@ public class TransferService {
 		List<Instance> instances = instanceService.selectInstanceList(filters);
 
 		instances.stream().forEach(x ->  {
-			Optional<String> rootDeviceName = instanceService.selectRootDeviceName(x.getBlockDeviceMappings(),x.getRootDeviceName());
+			Optional<String> rootDeviceName = instanceService.selectRootDeviceName(x.getBlockDeviceMappings(),x.getRootDeviceName());//루트디바이스이름
 
-			if(rootDeviceName.isPresent()) {
+			if(rootDeviceName.isPresent()) {//루트디바이스이름이 존재 할 경우
 				List<InstanceBlockDeviceMapping> instanceBlockDeviceMappingList = x.getBlockDeviceMappings();
 				Optional<EbsInstanceBlockDevice> ebsInstanceBlockDevice = selectEbsInstanceBlockDevice(instanceBlockDeviceMappingList, rootDeviceName.get());
 
-				if(ebsInstanceBlockDevice.isPresent()) {
+				if(ebsInstanceBlockDevice.isPresent()) {//루트디바이스 볼륨 찾기
 					List<Filter> volumeFilters = new ArrayList<Filter>();
 					Filter volumeFilter = new Filter();
 					volumeFilter.setName("volume-id");
 					volumeFilter.setValues(Arrays.asList(ebsInstanceBlockDevice.get().getVolumeId()));
 
 					List<Volume> volumes = volumeService.selectVolumeList(volumeFilters);
-					Volume volume = volumes.get(0);
+					Optional<Volume> volume = Optional.ofNullable(volumes.get(0));
+
+					Volume resultVolume = createVolume(volume.get());
+					AttachVolumeRequest attachVolumeRequest = new AttachVolumeRequest(resultVolume.getVolumeId(), x.getInstanceId(), "/dev/sdf");
+					AttachVolumeResult attachVolumeResult = volumeService.volumeAttach(attachVolumeRequest);
 
 					//DescribeVolumesRequest describeVolumesRequest = new DescribeVolumesRequest();
 
 				}
 				//selectRootDeviceVolumeId();
-				//Optional<EbsInstanceBlockDevice> ebsInstanceBlockDevice = instanceBlockDeviceMappingList.stream().filter(y -> rootDeviceName.equals(y.getDeviceName())).map(z -> z.getEbs()).findFirst();
+				//Optional<EbsInstanceBlockDevice> ebsInstanceBlockDevice = instanceBlockDevicexMappingList.stream().filter(y -> rootDeviceName.equals(y.getDeviceName())).map(z -> z.getEbs()).findFirst();
 			}
 
 		});
@@ -88,6 +76,7 @@ public class TransferService {
 		//instances.stream().map(Instance::getBlockDeviceMappings);
 //		InstanceBlockDeviceMapping instanceBlockDeviceMapping = instances.stream().map(x -> x.getBlockDeviceMappings().stream().filter(y -> y.equals(x.getRootDeviceName())));
 	}
+
 
 //	/**
 //	 * rootDeviceVolumeId 찾기
@@ -101,7 +90,6 @@ public class TransferService {
 //											 .map(x -> x.getEbs())
 //											 .findFirst();
 //	}
-
 	/**
 	 * rootDevice에 volumeId와 일치하는 EbsInstanceBlockDevice 객체 찾기
 	 *
@@ -113,6 +101,22 @@ public class TransferService {
 											 .filter(x -> x.getDeviceName().equals(rootDeviceName))
 											 .findFirst()
 											 .map(InstanceBlockDeviceMapping::getEbs);
+	}
+
+	/**
+	 * 볼륨 생성
+	 *
+	 * @param volume
+	 */
+	public Volume createVolume(Volume volume) {
+		CreateVolumeRequest createVolumeRequest = new CreateVolumeRequest();
+		createVolumeRequest.setSize(volume.getSize() + 5);//원본 볼륨보다 5GB 크게 설정
+		createVolumeRequest.setAvailabilityZone(volume.getAvailabilityZone());//
+		createVolumeRequest.setVolumeType(volume.getVolumeType());
+		createVolumeRequest.setEncrypted(false);
+		createVolumeRequest.setVolumeType(VolumeType.Gp2);
+
+		return volumeService.createVolume(createVolumeRequest);
 	}
 
 }

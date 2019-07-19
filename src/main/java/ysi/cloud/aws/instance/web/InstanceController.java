@@ -1,14 +1,10 @@
 package ysi.cloud.aws.instance.web;
 
 import com.amazonaws.services.ec2.model.Filter;
-import com.amazonaws.services.ec2.model.Image;
 import com.amazonaws.services.ec2.model.Instance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import ysi.cloud.aws.Image.service.ImageService;
 import ysi.cloud.aws.instance.service.InstanceService;
-import ysi.cloud.aws.vmTransfer.service.TransferService;
-import ysi.cloud.aws.volume.service.VolumeService;
 
 import java.util.List;
 
