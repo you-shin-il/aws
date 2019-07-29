@@ -119,4 +119,14 @@ public class VmTransferService {
 		return volumeService.createVolume(createVolumeRequest);
 	}
 
+	/**
+	 * 볼륨 초기화 쉘 스크립트 실행
+	 *
+	 * @param device
+	 * @param keyName
+	 * @param publicIp
+	 */
+	public void execVolumeInitShellScript(String publicIp, String keyName, String device) {
+
+	}
 }

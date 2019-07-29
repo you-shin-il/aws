@@ -2,9 +2,11 @@ package ysi.cloud.aws.vmTransfer.web;
 
 import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.Instance;
+import com.jcraft.jsch.Session;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import ysi.cloud.aws.instance.service.InstanceService;
+import ysi.cloud.aws.ssh.SSHClient;
 import ysi.cloud.aws.vmTransfer.service.VmTransferService;
 
 import java.util.List;
@@ -19,6 +21,8 @@ import java.util.List;
 public class VmTransferController {
 	@Autowired
 	private VmTransferService vmTransferService;
+	@Autowired
+	private SSHClient sshClient;
 
 	/**
 	 * filters에 해당하는 인스턴스 목록 조회
@@ -31,4 +35,11 @@ public class VmTransferController {
 		vmTransferService.awsMoveOpenstack(filters);
 	}
 
+	/**
+	 *
+	 */
+	@GetMapping("/sshTest.do")
+	public void sshTest() {
+		sshClient.getSession("ysi_keypair_20190722.pem");
+	}
 }

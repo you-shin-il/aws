@@ -20,7 +20,7 @@ import java.util.List;
 public class ImageService {
 	final AmazonEC2 ec2 = AmazonEC2ClientBuilder.defaultClient();
 
-	/**
+	/**≠≠
 	 * filters에 해당하는 이미지 목록 조회
 	 * filters에 값이 없으면 모든 인스턴스 목록 조회
 	 *

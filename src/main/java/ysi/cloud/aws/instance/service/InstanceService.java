@@ -47,7 +47,9 @@ public class InstanceService {
 		List<Reservation> reservations = describeInstancesResult.getReservations();
 
 		return reservations.stream()
-						   .map(x -> x.getInstances()).flatMap(Collection::stream).collect(Collectors.toList());
+						   .map(x -> x.getInstances())
+						   .flatMap(Collection::stream)
+						   .collect(Collectors.toList());
 	}
 
 	/**
