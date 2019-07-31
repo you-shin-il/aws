@@ -36,47 +36,35 @@ public class VmTransferService {
 	private VmTransferService transferService;
 
 	/**
-	 * aws 에서 오픈스택으로
-	 *
+	 * 인스턴스 이전
+	 * 1. 이전 대상 인스턴스 조회
+	 * 2. 볼륨 생성
+	 * 3. 볼륨 연결
+	 * 4. 볼륨 초기화
+	 * 5. 볼륨 mount
+	 * 6. 인스턴스 이미지 전송
 	 * @param filters
 	 */
 	public void awsMoveOpenstack(List<Filter> filters) {
 		List<Instance> instances = instanceService.selectInstanceList(filters);
-
+		instances.toString();
 		instances.stream().forEach(x ->  {
-			Optional<String> rootDeviceName = instanceService.selectRootDeviceName(x.getBlockDeviceMappings(),x.getRootDeviceName());//루트디바이스이름
+			Optional<String> rootDeviceName = instanceService.selectRootDeviceName(x.getBlockDeviceMappings(),x.getRootDeviceName());//루트디바이스이름 TODO 루트디바이스명 존재여부 확인 필요 없을 경우 삭제 할 것
 
-			if(rootDeviceName.isPresent()) {//루트디바이스이름이 존재 할 경우
+			if(rootDeviceName.isPresent()) {//루트디바이스이름이 존재 할 경우 TODO 루트디바이스명 존재여부 확인 필요 없을 경우 삭제 할 것
 				List<InstanceBlockDeviceMapping> instanceBlockDeviceMappingList = x.getBlockDeviceMappings();
-				Optional<EbsInstanceBlockDevice> ebsInstanceBlockDevice = selectEbsInstanceBlockDevice(instanceBlockDeviceMappingList, rootDeviceName.get());
+Optional<EbsInstanceBlockDevice> ebsInstanceBlockDevice = selectEbsInstanceBlockDevice(instanceBlockDeviceMappingList, rootDeviceName.get());
 
 				if(ebsInstanceBlockDevice.isPresent()) {//루트디바이스 볼륨 찾기
-					List<Filter> volumeFilters = new ArrayList<Filter>();
-					Filter volumeFilter = new Filter();
-					volumeFilter.setName("volume-id");
-					volumeFilter.setValues(Arrays.asList(ebsInstanceBlockDevice.get().getVolumeId()));
-
-					List<Volume> volumes = volumeService.selectVolumeList(volumeFilters);
-					Optional<Volume> volume = Optional.ofNullable(volumes.get(0));
-
-					Volume resultVolume = createVolume(volume.get());
-					AttachVolumeRequest attachVolumeRequest = new AttachVolumeRequest(resultVolume.getVolumeId(), x.getInstanceId(), "/dev/sdf");
-					AttachVolumeResult attachVolumeResult = volumeService.volumeAttach(attachVolumeRequest);
-
-					//DescribeVolumesRequest describeVolumesRequest = new DescribeVolumesRequest();
-
-				}
-				//selectRootDeviceVolumeId();
-				//Optional<EbsInstanceBlockDevice> ebsInstanceBlockDevice = instanceBlockDevicexMappingList.stream().filter(y -> rootDeviceName.equals(y.getDeviceName())).map(z -> z.getEbs()).findFirst();
-			}
+		Volume rootVolume = volumeService.getRootDeviceVolume(ebsInstanceBlockDevice.get());//루트 디바이스 볼륨
+		Volume attachVolume = createVolume(rootVolume);//인스턴스에 연결할 볼륨 생성
+		AttachVolumeRequest attachVolumeRequest = new AttachVolumeRequest(attachVolume.getVolumeId(), x.getInstanceId(), "/dev/xvdp");
+		AttachVolumeResult attachVolumeResult = volumeService.volumeAttach(attachVolumeRequest);//볼륨 연결
+	}
+}
 
 		});
-
-		//Optional<String> rootDeviceName = instances.stream().map(Instance::getRootDeviceName);
-		//instances.stream().map(Instance::getBlockDeviceMappings);
-//		InstanceBlockDeviceMapping instanceBlockDeviceMapping = instances.stream().map(x -> x.getBlockDeviceMappings().stream().filter(y -> y.equals(x.getRootDeviceName())));
-	}
-
+				}
 
 //	/**
 //	 * rootDeviceVolumeId 찾기
@@ -116,7 +104,9 @@ public class VmTransferService {
 		createVolumeRequest.setEncrypted(false);
 		createVolumeRequest.setVolumeType(VolumeType.Gp2);
 
-		return volumeService.createVolume(createVolumeRequest);
+		List<Volume> result = volumeService.createVolume(Arrays.asList(createVolumeRequest));
+
+		return result.stream().findFirst().get();
 	}
 
 	/**
@@ -129,4 +119,5 @@ public class VmTransferService {
 	public void execVolumeInitShellScript(String publicIp, String keyName, String device) {
 
 	}
+
 }

@@ -1,12 +1,11 @@
 package ysi.cloud.aws.vmTransfer.web;
 
 import com.amazonaws.services.ec2.model.Filter;
-import com.amazonaws.services.ec2.model.Instance;
-import com.jcraft.jsch.Session;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.web.bind.annotation.*;
-import ysi.cloud.aws.instance.service.InstanceService;
-import ysi.cloud.aws.ssh.SSHClient;
+import ysi.cloud.aws.vmTransfer.command.Command;
+import ysi.ssh.SSHClient;
 import ysi.cloud.aws.vmTransfer.service.VmTransferService;
 
 import java.util.List;
@@ -23,10 +22,11 @@ public class VmTransferController {
 	private VmTransferService vmTransferService;
 	@Autowired
 	private SSHClient sshClient;
+	@Autowired
+	Environment environment;
 
 	/**
-	 * filters에 해당하는 인스턴스 목록 조회
-	 * filters에 값이 없으면 모든 인스턴스 목록 조회
+	 * filters에 해당하는 인스턴스 이전
 	 *
 	 * @param filters
 	 */
@@ -40,6 +40,7 @@ public class VmTransferController {
 	 */
 	@GetMapping("/sshTest.do")
 	public void sshTest() {
-		sshClient.getSession("ysi_keypair_20190722.pem");
+		String actionCommand = String.format(Command.partitioning, "/dev/xvdp");
+		sshClient.getSession("ysi_keypair_20190722.pem", actionCommand);
 	}
 }

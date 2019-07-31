@@ -1,8 +1,9 @@
-package ysi.cloud.aws.ssh;
+package ysi.ssh;
 
 import com.jcraft.jsch.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import ysi.cloud.aws.keypair.Keypair;
 
@@ -19,7 +20,7 @@ import static org.springframework.util.StreamUtils.BUFFER_SIZE;
  * Date: 2019-07-29
  * Time: 오후 1:07
  */
-@Service
+@Component
 public class SSHClient {
     @Autowired
     private Keypair keypair;
@@ -35,7 +36,13 @@ public class SSHClient {
         return true;
     }
 
-    public void getSession(String keypairName) {
+    /**
+     * 쉘 명령어 실행
+     *
+     * @param command
+     * @param keypairName
+     */
+    public void getSession(String keypairName, String command) {
         ClassPathResource resource = keypair.getKeypairResourcePath(keypairName);
 
         JSch jsch = new JSch();
@@ -46,7 +53,7 @@ public class SSHClient {
 
         try {
             jsch.addIdentity(resource.getFile().getAbsolutePath());
-            Session session = jsch.getSession("ubuntu", "13.125.227.157", 22);
+            Session session = jsch.getSession("ubuntu", "13.125.69.128", 22);
             session.setConfig(config);
             session.connect();
             ChannelExec channelExec = (ChannelExec) session.openChannel("exec");

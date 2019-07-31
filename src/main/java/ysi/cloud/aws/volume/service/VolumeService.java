@@ -9,8 +9,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ysi.cloud.aws.instance.service.InstanceService;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Created by ysi.
@@ -25,9 +27,14 @@ public class VolumeService {
 	@Autowired
 	private InstanceService instanceService;
 
-	public Volume createVolume(CreateVolumeRequest createVolumeRequest) {
+	public List<Volume> createVolume(List<CreateVolumeRequest> createVolumeRequests) {
+		List<Volume> result = new ArrayList<Volume>();
 
-		CreateVolumeResult createVolumeResult = ec2.createVolume(createVolumeRequest);
+		createVolumeRequests.stream().forEach(createVolumeRequest-> {
+			CreateVolumeResult createVolumeResult = ec2.createVolume(createVolumeRequest);
+			result.add(createVolumeResult.getVolume());
+			}
+		);
 
 //		Instance instance = instanceService.selectInstance(instanceId);
 //		String imageId = instance.getImageId();
@@ -41,7 +48,7 @@ public class VolumeService {
 //		}
 //
 //		CreateVolumeRequest createVolumeRequest = new CreateVolumeRequest();
-		return createVolumeResult.getVolume();
+		return result;
 	}
 
 	/**
@@ -84,7 +91,9 @@ public class VolumeService {
 		createVolumeRequest.setSize(volume.getSize());
 		createVolumeRequest.setVolumeType(volume.getVolumeType());
 
-		return createVolume(createVolumeRequest);
+		List<Volume> result = createVolume(Arrays.asList(createVolumeRequest));
+
+		return result.stream().findFirst().get();
 	}
 
 	/**
@@ -96,4 +105,19 @@ public class VolumeService {
 		return ec2.attachVolume(attachVolumeRequest);
 	}
 
+	/**
+	 * 루트 디바이스 볼륨 조회
+	 *
+	 * @param ebsInstanceBlockDevice
+	 */
+	public Volume getRootDeviceVolume(EbsInstanceBlockDevice ebsInstanceBlockDevice) {
+		List<Filter> volumeFilters = new ArrayList<Filter>();
+		Filter volumeFilter = new Filter();
+		volumeFilter.setName("volume-id");
+		volumeFilter.setValues(Arrays.asList(ebsInstanceBlockDevice.getVolumeId()));
+
+		List<Volume> volumes = selectVolumeList(volumeFilters);
+
+		return volumes.stream().findFirst().get();
+	}
 }
